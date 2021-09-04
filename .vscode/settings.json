@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "*.m": "matlab",
+        "*.html.j2": "jinja",
+        "*.html": "html",
+        "*.wxss": "less",
+        "random": "cpp",
+        "limits": "cpp"
+    }
+}

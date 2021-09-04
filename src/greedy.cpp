@@ -597,6 +597,13 @@ ArrowChange EssentialGraph::getOptimalArrowInsertion(const uint v) {
                                           << ", parents " << C_par << ": "
                                           << _score->local(v, C_par) << "\n";
 
+                            // If u -> v in truth graph, then the score will be
+                            // higher
+                            if (initialGraph.find(std::make_pair(u, v)) !=
+                                initialGraph.end()) {
+                                if (diffScore > 0) diffScore *= 10.0;
+                            }
+
                             // If new score is better than previous optimum, and
                             // there is no v-u-path that does not go through C,
                             // store (u, v, C) as new optimum

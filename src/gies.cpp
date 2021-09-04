@@ -6,6 +6,7 @@
  */
 
 #include <algorithm>
+#include <set>
 #include <string>
 #include <vector>
 // #include <boost/lambda/lambda.hpp>
@@ -169,7 +170,7 @@ RcppExport SEXP globalMLE(SEXP argScore,
     Score* score = createScore(Rcpp::as<std::string>(argScore), &targets, data);
 
     // Calculate global score
-    std::vector<std::vector<double> > result =
+    std::vector<std::vector<double>> result =
         score->globalMLE(castGraph(argInEdges));
     delete score;
     return Rcpp::wrap(result);
@@ -208,20 +209,21 @@ RcppExport SEXP causalInference(SEXP argGraph,
 
     // Cast graph
     dout.level(1) << "Casting graph...\n";
-    std::cout << "Initial graph..." << std::endl;
     EssentialGraph graph = castGraph(argGraph);
     uint p = graph.getVertexCount();
 
+    std::set<std::pair<int, int>> initialGraph;
+
     if (!Rf_isNull(options["initialGraph"])) {
         std::cout << "use initial graph" << std::endl;
-        uint edges_count = 0;
         Rcpp::LogicalMatrix initialMatrix((SEXP)(options["initialGraph"]));
+        uint edges_count = 0;
         uint n_gaps = 0;
         for (uint i = 0; i < p; ++i) {
             for (uint j = 0; j < p; ++j) {
                 if (initialMatrix(i, j)) {
                     ++edges_count;
-                    graph.addEdge(i, j);
+                    initialGraph.insert(std::make_pair(i, j));
                 }
             }
         }
@@ -229,8 +231,7 @@ RcppExport SEXP causalInference(SEXP argGraph,
     } else {
         std::cout << "initial graph is empty" << std::endl;
     }
-
-    std::cout << "Initial graph finished" << std::endl;
+    graph.initialGraph = initialGraph;
 
     // Cast list of targets
     dout.level(1) << "Casting options...\n";
@@ -267,7 +268,7 @@ RcppExport SEXP causalInference(SEXP argGraph,
             }
         } else {
             std::vector<uint> maxDegrees =
-                Rcpp::as<std::vector<uint> >(options["maxDegree"]);
+                Rcpp::as<std::vector<uint>>(options["maxDegree"]);
             graph.limitVertexDegree(maxDegrees);
         }
     }
@@ -275,7 +276,7 @@ RcppExport SEXP causalInference(SEXP argGraph,
     // Cast option for required phases
     dout.level(2) << "  Casting phases...\n";
     std::vector<std::string> optPhases =
-        Rcpp::as<std::vector<std::string> >(options["phase"]);
+        Rcpp::as<std::vector<std::string>>(options["phase"]);
     std::vector<step_dir> phases(optPhases.size(), SD_FORWARD);
     for (uint i = 0; i < optPhases.size(); ++i) {
         if (optPhases[i] == "backward") {
@@ -291,7 +292,7 @@ RcppExport SEXP causalInference(SEXP argGraph,
     // TODO: activate function in R, and check for conversion from R to C
     // indexing convention
     std::vector<uint> childrenOnly =
-        Rcpp::as<std::vector<uint> >(options["childrenOnly"]);
+        Rcpp::as<std::vector<uint>>(options["childrenOnly"]);
     for (std::vector<uint>::iterator vi = childrenOnly.begin();
          vi != childrenOnly.end(); ++vi)
         graph.setChildrenOnly(*vi - 1, true);
@@ -551,7 +552,7 @@ RcppExport SEXP condIndTestGauss(SEXP argVertex1,
     // Cast arguments; note index shift between R and C++!
     uint u = Rcpp::as<uint>(argVertex1) - 1;
     uint v = Rcpp::as<uint>(argVertex2) - 1;
-    std::vector<uint> S = Rcpp::as<std::vector<uint> >(argCondSet);
+    std::vector<uint> S = Rcpp::as<std::vector<uint>>(argCondSet);
     for (std::vector<uint>::iterator si = S.begin(); si != S.end(); ++si)
         (*si)--;
     uint n = Rcpp::as<uint>(argSampleSize);
