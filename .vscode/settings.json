@@ -4,7 +4,9 @@
         "*.html.j2": "jinja",
         "*.html": "html",
         "*.wxss": "less",
+        "*.json": "jsonc",
         "random": "cpp",
-        "limits": "cpp"
+        "limits": "cpp",
+        "vector": "cpp"
     }
 }

@@ -1049,6 +1049,7 @@ setRefClass("EssGraph",
   fields = list(
     .nodes = "vector",
     .in.edges = "list",
+    .scorematrix = "matrix",
     .targets = "list",
     .score = "Score"
   ),
@@ -1140,6 +1141,8 @@ setRefClass("EssGraph",
                                   childrenOnly = integer(0),
                                   fixedGaps = NULL,
                                   initialGraph = NULL,
+                                  earlyStop = NULL,
+                                  beta = NULL,
                                   adaptive = c("none", "vstructures", "triples"),
                                   verbose = 0,
                                   p = 0) {
@@ -1176,6 +1179,8 @@ setRefClass("EssGraph",
         childrenOnly = childrenOnly,
         fixedGaps = fixedGaps,
         initialGraph = initialGraph,
+        earlyStop = earlyStop,
+        beta = beta,
         adaptive = adaptive,
         DEBUG.LEVEL = as.integer(verbose)
       )
@@ -1265,6 +1270,7 @@ setRefClass("EssGraph",
         return(FALSE)
       } else {
         .in.edges <<- new.graph$in.edges
+        .scorematrix <<- new.graph$scorematrix
         names(.in.edges) <<- .nodes
         return(TRUE)
       }

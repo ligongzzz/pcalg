@@ -601,7 +601,7 @@ ArrowChange EssentialGraph::getOptimalArrowInsertion(const uint v) {
                             // higher
                             if (initialGraph.find(std::make_pair(u, v)) !=
                                 initialGraph.end()) {
-                                if (diffScore > 0) diffScore *= 10.0;
+                                if (diffScore > 0) diffScore *= beta;
                             }
 
                             // If new score is better than previous optimum, and
@@ -1371,6 +1371,9 @@ bool EssentialGraph::greedyForward(const ForwardAdaptiveFlag adaptive) {
             addLogger(&edgeLogger);
         }
         insert(u_opt, v_opt, optInsertion.clique);
+
+        // Set score
+        graphScore[std::make_pair(u_opt, v_opt)] = optInsertion.score;
 
         // Adapt fixed gaps if requested (cf. "ARGES")
         if (adaptive == VSTRUCTURES && !hasEdge(v_opt, u_opt)) {

@@ -24,6 +24,7 @@ typedef boost::adjacency_list<boost::setS, boost::vecS, boost::undirectedS>
 #include "pcalg/greedy.hpp"
 #include "pcalg/score.hpp"
 #define DEFINE_GLOBAL_DEBUG_STREAM
+#include "RcppCommon.h"
 #include "pcalg/gies_debug.hpp"
 
 // using namespace boost::lambda;
@@ -231,6 +232,13 @@ RcppExport SEXP causalInference(SEXP argGraph,
     } else {
         std::cout << "initial graph is empty" << std::endl;
     }
+
+    if (!Rf_isNull(options["beta"])) {
+        graph.beta = Rcpp::as<double>(options["beta"]);
+    } else {
+        graph.beta = 1.0;
+    }
+
     graph.initialGraph = initialGraph;
 
     // Cast list of targets
@@ -337,15 +345,32 @@ RcppExport SEXP causalInference(SEXP argGraph,
         // Enable caching, if requested
         if (Rcpp::as<bool>(options["caching"])) graph.enableCaching();
 
-        // Perform a greedy search with the requested phases, either iteratively
-        // or only once
+        uint stepLimit;
+
+        // Limit to earlyStop * |v|
+        if (!Rf_isNull(options["earlyStop"])) {
+            int earlyStop = Rcpp::as<int>(options["earlyStop"]);
+            stepLimit = graph.getVertexCount() * earlyStop;
+        } else {
+            stepLimit = graph.getVertexCount() * graph.getVertexCount();
+        }
+
+        // Perform a greedy search with the requested phases, either
+        // iteratively or only once
         bool cont;
         int phaseCount(1);
         do {
             cont = false;
             for (uint i = 0; i < phases.size(); ++i) {
+                uint count = 0;
                 for (steps.push_back(0);
                      graph.greedyStepDir(phases[i], adaptive); steps.back()++) {
+                    if (phases[i] == SD_FORWARD) {
+                        count++;
+                        if (count >= stepLimit) {
+                            break;
+                        }
+                    }
                     cont = true;
                 }
                 ss.str(std::string());
@@ -472,10 +497,17 @@ RcppExport SEXP causalInference(SEXP argGraph,
     Rcpp::IntegerVector namedSteps(steps.begin(), steps.end());
     namedSteps.names() = stepNames;
 
+    // Convert scoreMatrix in EssentialGraph to R numeric matrix
+    Rcpp::NumericMatrix scoreMatrix(p, p);
+    for (const auto& edge : graph.graphScore) {
+        scoreMatrix(edge.first.first, edge.first.second) = edge.second;
+    }
+
     // TODO "interrupt" zurückgeben, falls Ausführung unterbrochen wurde.
     // Problem: check_interrupt() scheint nur einmal true zurückzugeben...
     return Rcpp::List::create(Rcpp::Named("in.edges") = wrapGraph(graph),
-                              Rcpp::Named("steps") = namedSteps);
+                              Rcpp::Named("steps") = namedSteps,
+                              Rcpp::Named("scorematrix") = scoreMatrix);
 
     END_RCPP
 }

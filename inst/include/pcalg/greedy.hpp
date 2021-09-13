@@ -14,6 +14,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <deque>
 #include <list>
+#include <map>
 #include <set>
 #include <utility>
 #include <vector>
@@ -533,6 +534,9 @@ class EssentialGraph {
 
     // Initial Graph fro GES
     std::set<std::pair<int, int>> initialGraph;
+    std::map<std::pair<int, int>, double> graphScore;
+
+    double beta = 1.0;
 
     /**
      * Removes all edges from the graph
